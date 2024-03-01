@@ -1,0 +1,33 @@
+trigger: none
+
+pool:
+  vmimage: 'windows-latest'
+
+stages:
+ - stage: Build
+   jobs:
+    - job: Apply_Prod_Parameters
+      displayName: 'Apply Job Parameters'
+      steps:
+      - checkout: self
+        persistCredentials: true
+      - task: CmdLine@2
+        displayName: 'Set credentials'
+        inputs:
+          script: |
+            git config --global user.email "azuredevops@myemailprovider.com"
+            git config --global user.name "Azure Devops pipeline"
+
+      - task: PowerShell@2
+        displayName: 'Run PowerShell Script'
+        inputs:
+          targetType: 'inline'
+          script: './powershell/env_parameter.ps1 -Workfolder $(System.DefaultWorkingDirectory)'          
+      - task: CmdLine@2
+        displayName: 'Push changes to repo'
+        inputs:
+          script: |
+            git switch -c master
+            git add .
+            git commit -m "Vaihdettiin tuotantoparametrit päälle. Muutoksen teki julkaisuputki."
+            git push origin master
